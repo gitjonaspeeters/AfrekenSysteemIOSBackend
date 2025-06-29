@@ -37,11 +37,35 @@ router.get('/:id', async (req, res) => {
   });
 
 router.post('/', async (req, res) => {
-    const { name, price, imageUrl } = req.body;
-    const product = await prisma.product.create({
-      data: { name, price, imageUrl },
-    });
-    res.status(201).json(product);
+    try {
+      const { name, price, imageUrl } = req.body;
+      
+      // Validation
+      if (!name || typeof name !== 'string' || name.trim().length === 0) {
+        return res.status(400).json({ error: 'Product name is required' });
+      }
+      
+      if (!price || typeof price !== 'number' || price <= 0) {
+        return res.status(400).json({ error: 'Valid price is required' });
+      }
+      
+      if (imageUrl && typeof imageUrl !== 'string') {
+        return res.status(400).json({ error: 'Image URL must be a string' });
+      }
+
+      const product = await prisma.product.create({
+        data: { 
+          name: name.trim(), 
+          price, 
+          imageUrl: imageUrl || '' 
+        },
+      });
+      
+      res.status(201).json(product);
+    } catch (error) {
+      console.error('Error creating product:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
   });
 
 router.put('/:id', async (req, res) => {
